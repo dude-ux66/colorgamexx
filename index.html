@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Neon Casino Game</title>
+<title>Neon Casino Pro</title>
 
 <style>
 body{
@@ -11,9 +11,10 @@ font-family:Arial;
 background:black;
 color:white;
 overflow:hidden;
+text-align:center;
 }
 
-/* moving particles */
+/* Background moving particles */
 body::before{
 content:"";
 position:fixed;
@@ -28,7 +29,7 @@ from{transform:translate(0,0);}
 to{transform:translate(-200px,-200px);}
 }
 
-.screen{display:none;height:100vh;padding:20px;text-align:center;}
+.screen{display:none;height:100vh;padding:20px;}
 .active{display:block;}
 
 button{
@@ -43,17 +44,14 @@ color:black;
 font-weight:bold;
 }
 
-.nav{
-position:fixed;
-bottom:0;
-width:100%;
-background:#111;
-display:flex;
-justify-content:space-around;
-padding:10px 0;
+input{
+padding:10px;
+border-radius:8px;
+border:none;
+margin:5px;
 }
 
-.balance{font-size:22px;margin-bottom:10px;}
+.balance{font-size:22px;margin:10px;}
 
 .color-box{
 width:90px;
@@ -74,28 +72,32 @@ to{box-shadow:0 0 25px currentColor;}
 .green{background:lime;}
 .blue{background:cyan;}
 
-.timer{font-size:22px;margin:10px;}
-.result{font-size:26px;margin-top:10px;}
+.timer{font-size:24px;margin:10px;}
 
 .progress{
-width:90%;
 height:10px;
-background:#222;
-margin:auto;
+background:#333;
 border-radius:10px;
+margin:10px 20px;
 overflow:hidden;
 }
 
-.bar{
+.progress-bar{
 height:100%;
 width:100%;
-background:lime;
-transition:1s linear;
+background:#00ffcc;
+transition:width 1s linear;
 }
 
-.danger{
-background:red !important;
+.warning{
+animation: blink .5s infinite alternate;
 }
+@keyframes blink{
+from{box-shadow:0 0 10px red;}
+to{box-shadow:0 0 25px red;}
+}
+
+.result{font-size:24px;margin-top:10px;}
 
 .coinRain{
 position:fixed;
@@ -106,51 +108,41 @@ animation: fall 3s linear forwards;
 @keyframes fall{
 to{transform:translateY(110vh);}
 }
-
-/* spin wheel */
-#wheel{
-width:200px;
-height:200px;
-border-radius:50%;
-border:8px solid white;
-margin:20px auto;
-background:conic-gradient(red 0 120deg, lime 120deg 240deg, cyan 240deg 360deg);
-transition:4s cubic-bezier(.17,.67,.16,.99);
-}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN SCREEN -->
 <div id="login" class="screen active">
 <h2>🎰 Neon Casino</h2>
-<input id="username" placeholder="Enter name" style="padding:10px;border-radius:8px;border:none;">
-<br><br>
-<button onclick="login()">ENTER</button>
+<input id="username" placeholder="Username"><br>
+<input id="password" type="password" placeholder="Password"><br>
+<button onclick="login()">LOGIN</button>
 </div>
 
 <!-- WALLET -->
 <div id="wallet" class="screen">
 <h2>Welcome <span id="user"></span></h2>
 <div class="balance">Coins: <span id="coins">500</span></div>
-<button onclick="showScreen('game')">Play Color Game</button>
-<button onclick="showScreen('spin')">Spin Wheel</button>
+<button onclick="showScreen('game')">Play Game</button>
 </div>
 
-<!-- COLOR GAME -->
+<!-- GAME -->
 <div id="game" class="screen">
 <h2>Color Game</h2>
 
 <div>
+<button onclick="setTimer(10)">10s</button>
 <button onclick="setTimer(30)">30s</button>
 <button onclick="setTimer(60)">60s</button>
-<button onclick="setTimer(180)">3 min</button>
 </div>
 
-<div class="timer">Time: <span id="time">60</span></div>
+<div class="timer">Time: <span id="time">10</span></div>
 
-<div class="progress"><div id="bar" class="bar"></div></div>
+<div class="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
 
 <div>
 <div class="color-box red" onclick="choose('Red')"></div>
@@ -161,40 +153,32 @@ transition:4s cubic-bezier(.17,.67,.16,.99);
 <div class="result" id="result"></div>
 </div>
 
-<!-- SPIN -->
-<div id="spin" class="screen">
-<h2>Spin & Win</h2>
-<div id="wheel"></div>
-<button onclick="spinWheel()">SPIN</button>
-<div id="spinResult" class="result"></div>
-</div>
-
-<div class="nav">
-<button onclick="showScreen('wallet')">Wallet</button>
-<button onclick="showScreen('game')">Game</button>
-<button onclick="showScreen('spin')">Spin</button>
-</div>
-
 <script>
+
 let coins=500;
 let selected=null;
-let time=60;
-let selectedTime=60;
+let selectedTime=10;
+let time=10;
 let timer;
-let wheel=document.getElementById("wheel");
-let bar=document.getElementById("bar");
 
 function login(){
 let name=document.getElementById("username").value;
-if(name==="") return alert("enter name");
+let pass=document.getElementById("password").value;
+
+if(name==="" || pass===""){
+alert("Enter username & password");
+return;
+}
+
 localStorage.setItem("user",name);
 document.getElementById("user").innerText=name;
-showScreen('wallet');
+showScreen("wallet");
 }
 
 function showScreen(id){
 document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
+
 if(id==="game") startGame();
 }
 
@@ -207,8 +191,8 @@ function startGame(){
 time=selectedTime;
 selected=null;
 document.getElementById("result").innerText="";
-bar.style.width="100%";
-bar.classList.remove("danger");
+document.getElementById("time").innerText=time;
+document.getElementById("progressBar").style.width="100%";
 
 clearInterval(timer);
 timer=setInterval(()=>{
@@ -216,14 +200,14 @@ time--;
 document.getElementById("time").innerText=time;
 
 let percent=(time/selectedTime)*100;
-bar.style.width=percent+"%";
+document.getElementById("progressBar").style.width=percent+"%";
 
 if(time<=5){
-bar.classList.add("danger");
-if(navigator.vibrate) navigator.vibrate(200);
+document.getElementById("time").classList.add("warning");
+navigator.vibrate(200);
 }
 
-if(time==0){
+if(time<=0){
 clearInterval(timer);
 finishGame();
 }
@@ -236,35 +220,23 @@ document.getElementById("result").innerText="Selected: "+c;
 }
 
 function finishGame(){
+document.getElementById("time").classList.remove("warning");
+
 let colors=["Red","Green","Blue"];
 let result=colors[Math.floor(Math.random()*3)];
 
-let reward=100;
-if(time<=5) reward*=2; // double reward last seconds
-
 if(selected===result){
-coins+=reward;
+coins+=100;
 coinRain();
-playSound(true);
-flipText("🎉 WIN "+reward+" coins!");
+document.getElementById("result").innerText="🎉 YOU WIN! "+result;
 }else{
 coins-=50;
-playSound(false);
-flipText("❌ LOST!");
+document.getElementById("result").innerText="❌ YOU LOST! "+result;
 }
 
 updateCoins();
 
-setTimeout(startGame,2000); // auto next round
-}
-
-function flipText(text){
-let r=document.getElementById("result");
-r.style.transform="rotateY(90deg)";
-setTimeout(()=>{
-r.innerText=text;
-r.style.transform="rotateY(0deg)";
-},300);
+setTimeout(startGame,3000); // auto next round
 }
 
 function updateCoins(){
@@ -282,26 +254,6 @@ setTimeout(()=>coin.remove(),3000);
 }
 }
 
-function spinWheel(){
-let deg=1440+Math.floor(Math.random()*360);
-wheel.style.transform="rotate("+deg+"deg)";
-
-setTimeout(()=>{
-let reward=[50,100,200];
-let win=reward[Math.floor(Math.random()*3)];
-coins+=win;
-updateCoins();
-coinRain();
-document.getElementById("spinResult").innerText="Won "+win+" coins!";
-},4000);
-}
-
-function playSound(win){
-let audio=new Audio(win?
-"https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3":
-"https://assets.mixkit.co/sfx/preview/mixkit-losing-bleeps-2026.mp3");
-audio.play();
-}
 </script>
 
 </body>
