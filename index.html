@@ -8,64 +8,42 @@
 body{
 margin:0;
 font-family:Arial;
-background:black;
+background:#000;
 color:white;
-overflow:hidden;
 text-align:center;
 }
 
-/* Background moving particles */
-body::before{
-content:"";
-position:fixed;
-width:200%;
-height:200%;
-background:radial-gradient(circle, rgba(0,255,255,.15) 1px, transparent 1px);
-background-size:40px 40px;
-animation: moveBg 20s linear infinite;
-}
-@keyframes moveBg{
-from{transform:translate(0,0);}
-to{transform:translate(-200px,-200px);}
-}
-
-.screen{display:none;height:100vh;padding:20px;}
+.screen{display:none;padding:20px;}
 .active{display:block;}
-
-button{
-padding:12px;
-border:none;
-border-radius:10px;
-margin:5px;
-font-size:16px;
-cursor:pointer;
-background:#00eaff;
-color:black;
-font-weight:bold;
-}
 
 input{
 padding:10px;
+margin:5px;
 border-radius:8px;
 border:none;
+width:200px;
+}
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:8px;
 margin:5px;
+background:#00eaff;
+color:black;
+font-weight:bold;
+cursor:pointer;
 }
 
 .balance{font-size:22px;margin:10px;}
 
 .color-box{
-width:90px;
-height:90px;
-border-radius:15px;
+width:80px;
+height:80px;
 display:inline-block;
 margin:10px;
+border-radius:10px;
 cursor:pointer;
-animation: glow 1s infinite alternate;
-}
-
-@keyframes glow{
-from{box-shadow:0 0 10px currentColor;}
-to{box-shadow:0 0 25px currentColor;}
 }
 
 .red{background:red;}
@@ -73,76 +51,44 @@ to{box-shadow:0 0 25px currentColor;}
 .blue{background:cyan;}
 
 .timer{font-size:24px;margin:10px;}
-
-.progress{
-height:10px;
-background:#333;
-border-radius:10px;
-margin:10px 20px;
-overflow:hidden;
-}
-
-.progress-bar{
-height:100%;
-width:100%;
-background:#00ffcc;
-transition:width 1s linear;
-}
-
-.warning{
-animation: blink .5s infinite alternate;
-}
-@keyframes blink{
-from{box-shadow:0 0 10px red;}
-to{box-shadow:0 0 25px red;}
-}
-
-.result{font-size:24px;margin-top:10px;}
-
-.coinRain{
-position:fixed;
-top:-50px;
-font-size:22px;
-animation: fall 3s linear forwards;
-}
-@keyframes fall{
-to{transform:translateY(110vh);}
-}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="login" class="screen active">
-<h2>🎰 Neon Casino</h2>
-<input id="username" placeholder="Username"><br>
-<input id="password" type="password" placeholder="Password"><br>
-<button onclick="login()">LOGIN</button>
+<h2>Login</h2>
+<input id="loginUser" placeholder="Username"><br>
+<input id="loginPass" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+<p>Don't have account?</p>
+<button onclick="showScreen('register')">Register</button>
+<p id="loginMsg"></p>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="screen">
+<h2>Register</h2>
+<input id="regUser" placeholder="Username"><br>
+<input id="regPass" type="password" placeholder="Password"><br>
+<button onclick="register()">Create Account</button>
+<button onclick="showScreen('login')">Back to Login</button>
+<p id="regMsg"></p>
 </div>
 
 <!-- WALLET -->
 <div id="wallet" class="screen">
 <h2>Welcome <span id="user"></span></h2>
-<div class="balance">Coins: <span id="coins">500</span></div>
+<div class="balance">Coins: <span id="coins"></span></div>
 <button onclick="showScreen('game')">Play Game</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <!-- GAME -->
 <div id="game" class="screen">
-<h2>Color Game</h2>
-
-<div>
-<button onclick="setTimer(10)">10s</button>
-<button onclick="setTimer(30)">30s</button>
-<button onclick="setTimer(60)">60s</button>
-</div>
-
+<h2>Color Game (10 sec)</h2>
 <div class="timer">Time: <span id="time">10</span></div>
-
-<div class="progress">
-<div class="progress-bar" id="progressBar"></div>
-</div>
 
 <div>
 <div class="color-box red" onclick="choose('Red')"></div>
@@ -150,62 +96,83 @@ to{transform:translateY(110vh);}
 <div class="color-box blue" onclick="choose('Blue')"></div>
 </div>
 
-<div class="result" id="result"></div>
+<p id="result"></p>
+<button onclick="showScreen('wallet')">Back</button>
 </div>
 
 <script>
 
-let coins=500;
-let selected=null;
-let selectedTime=10;
-let time=10;
+let currentUser=null;
+let coins=0;
 let timer;
-
-function login(){
-let name=document.getElementById("username").value;
-let pass=document.getElementById("password").value;
-
-if(name==="" || pass===""){
-alert("Enter username & password");
-return;
-}
-
-localStorage.setItem("user",name);
-document.getElementById("user").innerText=name;
-showScreen("wallet");
-}
+let selected=null;
+let time=10;
 
 function showScreen(id){
 document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-
 if(id==="game") startGame();
 }
 
-function setTimer(t){
-selectedTime=t;
-document.getElementById("time").innerText=t;
+function register(){
+let u=document.getElementById("regUser").value;
+let p=document.getElementById("regPass").value;
+
+if(!u || !p){
+document.getElementById("regMsg").innerText="Fill all fields";
+return;
+}
+
+if(localStorage.getItem(u)){
+document.getElementById("regMsg").innerText="User already exists";
+return;
+}
+
+localStorage.setItem(u, JSON.stringify({password:p, coins:500}));
+document.getElementById("regMsg").innerText="Account created! Go login.";
+}
+
+function login(){
+let u=document.getElementById("loginUser").value;
+let p=document.getElementById("loginPass").value;
+
+let data=localStorage.getItem(u);
+
+if(!data){
+document.getElementById("loginMsg").innerText="User not found";
+return;
+}
+
+let user=JSON.parse(data);
+
+if(user.password!==p){
+document.getElementById("loginMsg").innerText="Wrong password";
+return;
+}
+
+currentUser=u;
+coins=user.coins;
+document.getElementById("user").innerText=u;
+document.getElementById("coins").innerText=coins;
+
+showScreen("wallet");
+}
+
+function logout(){
+currentUser=null;
+showScreen("login");
 }
 
 function startGame(){
-time=selectedTime;
+time=10;
 selected=null;
 document.getElementById("result").innerText="";
 document.getElementById("time").innerText=time;
-document.getElementById("progressBar").style.width="100%";
 
 clearInterval(timer);
 timer=setInterval(()=>{
 time--;
 document.getElementById("time").innerText=time;
-
-let percent=(time/selectedTime)*100;
-document.getElementById("progressBar").style.width=percent+"%";
-
-if(time<=5){
-document.getElementById("time").classList.add("warning");
-navigator.vibrate(200);
-}
 
 if(time<=0){
 clearInterval(timer);
@@ -214,44 +181,28 @@ finishGame();
 },1000);
 }
 
-function choose(c){
-selected=c;
-document.getElementById("result").innerText="Selected: "+c;
+function choose(color){
+selected=color;
 }
 
 function finishGame(){
-document.getElementById("time").classList.remove("warning");
-
 let colors=["Red","Green","Blue"];
 let result=colors[Math.floor(Math.random()*3)];
 
 if(selected===result){
 coins+=100;
-coinRain();
-document.getElementById("result").innerText="🎉 YOU WIN! "+result;
+document.getElementById("result").innerText="You Win! +100";
 }else{
 coins-=50;
-document.getElementById("result").innerText="❌ YOU LOST! "+result;
+document.getElementById("result").innerText="You Lost! -50";
 }
 
 updateCoins();
-
-setTimeout(startGame,3000); // auto next round
 }
 
 function updateCoins(){
 document.getElementById("coins").innerText=coins;
-}
-
-function coinRain(){
-for(let i=0;i<15;i++){
-let coin=document.createElement("div");
-coin.innerHTML="🪙";
-coin.className="coinRain";
-coin.style.left=Math.random()*100+"%";
-document.body.appendChild(coin);
-setTimeout(()=>coin.remove(),3000);
-}
+localStorage.setItem(currentUser, JSON.stringify({password:JSON.parse(localStorage.getItem(currentUser)).password, coins:coins}));
 }
 
 </script>
