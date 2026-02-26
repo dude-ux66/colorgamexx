@@ -1,218 +1,306 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coin App</title>
+<title>Neon Casino Game</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial, sans-serif;
-}
-
 body{
-height:100vh;
-background: linear-gradient(-45deg,#1e3c72,#2a5298,#6dd5ed,#2193b0);
-background-size: 400% 400%;
-animation: gradientBG 12s ease infinite;
-display:flex;
-justify-content:center;
-align-items:center;
+margin:0;
+font-family:Arial;
+background:black;
 color:white;
+overflow:hidden;
 }
 
-@keyframes gradientBG{
-0%{background-position:0% 50%;}
-50%{background-position:100% 50%;}
-100%{background-position:0% 50%;}
+/* moving particles */
+body::before{
+content:"";
+position:fixed;
+width:200%;
+height:200%;
+background:radial-gradient(circle, rgba(0,255,255,.15) 1px, transparent 1px);
+background-size:40px 40px;
+animation: moveBg 20s linear infinite;
+}
+@keyframes moveBg{
+from{transform:translate(0,0);}
+to{transform:translate(-200px,-200px);}
 }
 
-.app{
-width:380px;
-backdrop-filter: blur(20px);
-background: rgba(255,255,255,0.08);
-border-radius:20px;
-padding:20px;
-box-shadow:0 8px 30px rgba(0,0,0,0.3);
-}
+.screen{display:none;height:100vh;padding:20px;text-align:center;}
+.active{display:block;}
 
-.header{
-text-align:center;
-margin-bottom:15px;
-}
-
-.balance{
-font-size:28px;
-font-weight:bold;
-margin-top:8px;
-}
-
-.nav{
-display:flex;
-justify-content:space-between;
-margin:15px 0;
-}
-
-.nav button{
-flex:1;
-margin:4px;
-padding:10px;
-border:none;
-border-radius:10px;
-background:rgba(255,255,255,0.2);
-color:white;
-font-size:16px;
-cursor:pointer;
-transition:.3s;
-}
-
-.nav button:hover{
-background:rgba(255,255,255,0.4);
-}
-
-.section{
-display:none;
-animation: fade .4s ease;
-}
-
-.active{
-display:block;
-}
-
-@keyframes fade{
-from{opacity:0; transform:translateY(10px)}
-to{opacity:1; transform:translateY(0)}
-}
-
-.btn{
-width:100%;
-padding:14px;
-margin:6px 0;
-border:none;
-border-radius:12px;
-background:#00c6ff;
-background:linear-gradient(to right,#0072ff,#00c6ff);
-color:white;
-font-size:18px;
-cursor:pointer;
-transition:.3s;
-}
-
-.btn:hover{
-transform:scale(1.05);
-}
-
-input{
-width:100%;
+button{
 padding:12px;
 border:none;
 border-radius:10px;
-margin:10px 0;
+margin:5px;
 font-size:16px;
+cursor:pointer;
+background:#00eaff;
+color:black;
+font-weight:bold;
 }
 
-.play-box{
-background:rgba(255,255,255,0.15);
-padding:20px;
+.nav{
+position:fixed;
+bottom:0;
+width:100%;
+background:#111;
+display:flex;
+justify-content:space-around;
+padding:10px 0;
+}
+
+.balance{font-size:22px;margin-bottom:10px;}
+
+.color-box{
+width:90px;
+height:90px;
 border-radius:15px;
-text-align:center;
+display:inline-block;
+margin:10px;
+cursor:pointer;
+animation: glow 1s infinite alternate;
 }
 
-.footer{
-text-align:center;
-font-size:12px;
-opacity:0.7;
-margin-top:10px;
+@keyframes glow{
+from{box-shadow:0 0 10px currentColor;}
+to{box-shadow:0 0 25px currentColor;}
+}
+
+.red{background:red;}
+.green{background:lime;}
+.blue{background:cyan;}
+
+.timer{font-size:22px;margin:10px;}
+.result{font-size:26px;margin-top:10px;}
+
+.progress{
+width:90%;
+height:10px;
+background:#222;
+margin:auto;
+border-radius:10px;
+overflow:hidden;
+}
+
+.bar{
+height:100%;
+width:100%;
+background:lime;
+transition:1s linear;
+}
+
+.danger{
+background:red !important;
+}
+
+.coinRain{
+position:fixed;
+top:-50px;
+font-size:22px;
+animation: fall 3s linear forwards;
+}
+@keyframes fall{
+to{transform:translateY(110vh);}
+}
+
+/* spin wheel */
+#wheel{
+width:200px;
+height:200px;
+border-radius:50%;
+border:8px solid white;
+margin:20px auto;
+background:conic-gradient(red 0 120deg, lime 120deg 240deg, cyan 240deg 360deg);
+transition:4s cubic-bezier(.17,.67,.16,.99);
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
-
-<div class="header">
-<h2>💰 Coin App</h2>
-<div class="balance">Coins: <span id="coins">0</span></div>
-</div>
-
-<div class="nav">
-<button onclick="showSection('wallet')">Wallet</button>
-<button onclick="showSection('topup')">Top-up</button>
-<button onclick="showSection('play')">Play</button>
+<!-- LOGIN -->
+<div id="login" class="screen active">
+<h2>🎰 Neon Casino</h2>
+<input id="username" placeholder="Enter name" style="padding:10px;border-radius:8px;border:none;">
+<br><br>
+<button onclick="login()">ENTER</button>
 </div>
 
 <!-- WALLET -->
-<div id="wallet" class="section active">
-<p>Your wallet balance updates instantly.</p>
-<button class="btn" onclick="alert('Withdraw feature coming soon')">Withdraw</button>
+<div id="wallet" class="screen">
+<h2>Welcome <span id="user"></span></h2>
+<div class="balance">Coins: <span id="coins">500</span></div>
+<button onclick="showScreen('game')">Play Color Game</button>
+<button onclick="showScreen('spin')">Spin Wheel</button>
 </div>
 
-<!-- TOPUP -->
-<div id="topup" class="section">
-<input type="number" id="amount" placeholder="Enter amount (100 - 10000)">
-<button class="btn" onclick="addMoney()">Add Cash</button>
+<!-- COLOR GAME -->
+<div id="game" class="screen">
+<h2>Color Game</h2>
 
-<button class="btn" onclick="quickAdd(100)">₹100</button>
-<button class="btn" onclick="quickAdd(500)">₹500</button>
-<button class="btn" onclick="quickAdd(1000)">₹1000</button>
-<button class="btn" onclick="quickAdd(5000)">₹5000</button>
-<button class="btn" onclick="quickAdd(10000)">₹10000</button>
+<div>
+<button onclick="setTimer(30)">30s</button>
+<button onclick="setTimer(60)">60s</button>
+<button onclick="setTimer(180)">3 min</button>
 </div>
 
-<!-- PLAY -->
-<div id="play" class="section">
-<div class="play-box">
-<h3>🎮 Play & Earn</h3>
-<p>Use coins to play games & win rewards</p>
-<button class="btn" onclick="playGame()">Play Game</button>
-</div>
+<div class="timer">Time: <span id="time">60</span></div>
+
+<div class="progress"><div id="bar" class="bar"></div></div>
+
+<div>
+<div class="color-box red" onclick="choose('Red')"></div>
+<div class="color-box green" onclick="choose('Green')"></div>
+<div class="color-box blue" onclick="choose('Blue')"></div>
 </div>
 
-<div class="footer">Secure • Fast • Smooth Experience</div>
+<div class="result" id="result"></div>
+</div>
 
+<!-- SPIN -->
+<div id="spin" class="screen">
+<h2>Spin & Win</h2>
+<div id="wheel"></div>
+<button onclick="spinWheel()">SPIN</button>
+<div id="spinResult" class="result"></div>
+</div>
+
+<div class="nav">
+<button onclick="showScreen('wallet')">Wallet</button>
+<button onclick="showScreen('game')">Game</button>
+<button onclick="showScreen('spin')">Spin</button>
 </div>
 
 <script>
-let coins=0;
+let coins=500;
+let selected=null;
+let time=60;
+let selectedTime=60;
+let timer;
+let wheel=document.getElementById("wheel");
+let bar=document.getElementById("bar");
 
-function showSection(id){
-document.querySelectorAll('.section').forEach(sec=>sec.classList.remove('active'));
-document.getElementById(id).classList.add('active');
-}
-
-function addMoney(){
-let amount=document.getElementById("amount").value;
-if(amount<100 || amount>10000){
-alert("Enter amount between 100 and 10000");
-return;
-}
-coins+=parseInt(amount);
-updateCoins();
-alert("Top-up successful!");
+function login(){
+let name=document.getElementById("username").value;
+if(name==="") return alert("enter name");
+localStorage.setItem("user",name);
+document.getElementById("user").innerText=name;
+showScreen('wallet');
 }
 
-function quickAdd(amount){
-coins+=amount;
-updateCoins();
-alert("₹"+amount+" added");
+function showScreen(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+if(id==="game") startGame();
 }
 
-function playGame(){
-if(coins<50){
-alert("Need 50 coins to play");
-return;
+function setTimer(t){
+selectedTime=t;
+document.getElementById("time").innerText=t;
 }
+
+function startGame(){
+time=selectedTime;
+selected=null;
+document.getElementById("result").innerText="";
+bar.style.width="100%";
+bar.classList.remove("danger");
+
+clearInterval(timer);
+timer=setInterval(()=>{
+time--;
+document.getElementById("time").innerText=time;
+
+let percent=(time/selectedTime)*100;
+bar.style.width=percent+"%";
+
+if(time<=5){
+bar.classList.add("danger");
+if(navigator.vibrate) navigator.vibrate(200);
+}
+
+if(time==0){
+clearInterval(timer);
+finishGame();
+}
+},1000);
+}
+
+function choose(c){
+selected=c;
+document.getElementById("result").innerText="Selected: "+c;
+}
+
+function finishGame(){
+let colors=["Red","Green","Blue"];
+let result=colors[Math.floor(Math.random()*3)];
+
+let reward=100;
+if(time<=5) reward*=2; // double reward last seconds
+
+if(selected===result){
+coins+=reward;
+coinRain();
+playSound(true);
+flipText("🎉 WIN "+reward+" coins!");
+}else{
 coins-=50;
+playSound(false);
+flipText("❌ LOST!");
+}
+
 updateCoins();
-alert("You played the game!");
+
+setTimeout(startGame,2000); // auto next round
+}
+
+function flipText(text){
+let r=document.getElementById("result");
+r.style.transform="rotateY(90deg)";
+setTimeout(()=>{
+r.innerText=text;
+r.style.transform="rotateY(0deg)";
+},300);
 }
 
 function updateCoins(){
 document.getElementById("coins").innerText=coins;
+}
+
+function coinRain(){
+for(let i=0;i<15;i++){
+let coin=document.createElement("div");
+coin.innerHTML="🪙";
+coin.className="coinRain";
+coin.style.left=Math.random()*100+"%";
+document.body.appendChild(coin);
+setTimeout(()=>coin.remove(),3000);
+}
+}
+
+function spinWheel(){
+let deg=1440+Math.floor(Math.random()*360);
+wheel.style.transform="rotate("+deg+"deg)";
+
+setTimeout(()=>{
+let reward=[50,100,200];
+let win=reward[Math.floor(Math.random()*3)];
+coins+=win;
+updateCoins();
+coinRain();
+document.getElementById("spinResult").innerText="Won "+win+" coins!";
+},4000);
+}
+
+function playSound(win){
+let audio=new Audio(win?
+"https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3":
+"https://assets.mixkit.co/sfx/preview/mixkit-losing-bleeps-2026.mp3");
+audio.play();
 }
 </script>
 
