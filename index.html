@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colour Game</title>
+<style>
+body{margin:0;font-family:Arial;background:#0f172a;color:white;text-align:center;}
+.header{background:#111827;padding:15px;font-size:22px;font-weight:bold;}
+.balance{margin-top:10px;font-size:18px;}
+.timer{font-size:35px;margin-top:15px;}
+.result{margin:15px;font-size:20px;min-height:30px;}
+button{padding:10px 15px;margin:8px;border:none;border-radius:10px;font-size:16px;font-weight:bold;}
+.red{background:#ef4444;color:white;}
+.green{background:#22c55e;color:white;}
+.violet{background:#a855f7;color:white;}
+.topup{background:#2563eb;color:white;}
+.bet{background:#f59e0b;color:black;}
+</style>
+</head>
+<body>
+
+<div class="header">COLOUR GAME</div>
+
+<div class="balance">
+Coins: <span id="coins">0</span>
+</div>
+
+<br>
+<button class="topup" onclick="addCash()">Add Cash</button>
+
+<div class="timer" id="timer">10</div>
+
+<div>
+<input type="number" id="betAmount" placeholder="Enter Bet Coins" min="1">
+<button class="bet" onclick="placeBet()">Place Bet</button>
+</div>
+
+<div class="result" id="result">Select Colour</div>
+
+<button class="red" onclick="selectColor('Red')">Red</button>
+<button class="green" onclick="selectColor('Green')">Green</button>
+<button class="violet" onclick="selectColor('Violet')">Violet</button>
+
+<script>
+let coins=0;
+let selected="";
+let bet=0;
+let time=10;
+
+function updateCoins(){
+document.getElementById("coins").innerHTML=coins;
+}
+
+function addCash(){
+let amount=prompt("Enter amount (100 - 10000)");
+if(amount>=100 && amount<=10000){
+coins+=parseInt(amount);
+alert("Coins Added: "+amount);
+updateCoins();
+}else{
+alert("Minimum 100 and Maximum 10000 allowed");
+}
+}
+
+function placeBet(){
+let betInput=document.getElementById("betAmount").value;
+if(betInput<=0 || betInput>coins){
+alert("Invalid Bet Amount");
+return;
+}
+bet=parseInt(betInput);
+coins-=bet;
+updateCoins();
+alert("Bet Placed");
+}
+
+function selectColor(color){
+selected=color;
+document.getElementById("result").innerHTML="Selected: "+color;
+}
+
+function startTimer(){
+let interval=setInterval(()=>{
+time--;
+document.getElementById("timer").innerHTML=time;
+if(time==0){
+clearInterval(interval);
+showResult();
+}
+},1000);
+}
+
+function showResult(){
+const colors=["Red","Green","Violet"];
+let result=colors[Math.floor(Math.random()*3)];
+
+if(selected==result){
+let win=bet*2;
+coins+=win;
+document.getElementById("result").innerHTML="Result: "+result+" 🎉 WIN "+win;
+}else{
+document.getElementById("result").innerHTML="Result: "+result+" ❌ LOSE";
+}
+
+selected="";
+bet=0;
+time=10;
+updateCoins();
+setTimeout(startTimer,2000);
+}
+
+startTimer();
+</script>
+
+</body>
+</html>
